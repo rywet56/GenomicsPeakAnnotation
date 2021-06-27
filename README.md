@@ -2,12 +2,34 @@
 
 This repositroy contains functions that are used to annotate eg. ChIP-seq or ATAC-seq data.
 
+# How to use
+### 1) download the file atac_peak_annotation.r or clone this repository
 
+### 2) load the peak annotion functions into your R session
+```R
+source('.../atac_peak_annotation.r')
+```
+
+### 3) read in a .csv version of a .gtf file
+```R
+path <- ".../gtf_file.csv"
+gtf_df <- read.csv(file = path, row.names = 1)
+```
+
+### 4) read in .csv file containing counts for peak regions
+```R
+path <- ".../counts.csv"
+peaks_df <- read.csv(file = path, row.names = 1)
+```
+
+### 5) specify peak annotation priority
 ```R
 ap <- c('promoter_1kb', 'promoter_2kb', 'promoter_3kb', 'promoter_1kb_downstream', 
         'UTR5', 'Intron', 'Exon', 'UTR3', 'CDS',
         'intergenic', 'lncRNA', 'snoRNA', 'miRNA', 'genic')
 ```
+
+### 6) perform peak annotation
 ```R
 anno <- annotate_peaks(peaks_df = peaks_df, gtf_df = gtf_df, next_gene = TRUE,
                        summit = TRUE, unique_assignment = TRUE, next_gene_range = c(-10000, 10000),
@@ -16,6 +38,8 @@ anno <- annotate_peaks(peaks_df = peaks_df, gtf_df = gtf_df, next_gene = TRUE,
                        prom_dowstream_region=c(0, 1000),
                        unique_promoter_assignment=FALSE)
 ```
+
+# Parameters
 peaks_df: [DataFrame]  
 containing regions (peaks) with columns specifying chromosome, start and end of the peak. 
 
@@ -55,4 +79,8 @@ specifying the range of base pairs upstream/around the gene transcription start 
 prom_dowstream_region: [numeric vector]   
 specifying the range of base pairs upstream/around the gene transcription termination site (TTS) that should be used to define proximal downstream promoters  
 
+# Annotation Approach
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/43107602/123545315-b264a900-d757-11eb-971a-4faf2a1a2f7c.png"        height="562" width="1000">
+ </p>
 
