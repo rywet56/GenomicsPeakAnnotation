@@ -245,7 +245,7 @@ get_miRNA <- function(gtf_df){
 
 get_overlaps <- function(peaks_df, regions_df, genomic_feature, summit=TRUE,
                          unique_assignment=TRUE, next_gene_range = c(-2000, 2000),
-                         add_tair=TRUE){
+                         add_tair=TRUE, add_target_index=FALSE){
   
   # peaks_df <- peaks_df
   # regions_df <- regions_df
@@ -277,13 +277,17 @@ get_overlaps <- function(peaks_df, regions_df, genomic_feature, summit=TRUE,
   
   peaks_df$start <- round(peaks_df$start, 0)
   peaks_df$end <- round(peaks_df$end, 0)
-  regions_gr[1:5,]
+  # regions_gr[1:5,]
   
   # find overlaps of peaks with TSS regions
   res <- IRanges::findOverlaps(query = peaks_gr, subject = regions_gr)
   res <- data.frame(from=from(res), to=to(res))
 
   # find unique assignment based on distance of peak summit and region summit
+  # res is a df which maps regions in peak_df to regions in regions_df
+  # one region in peak_df can be mapped to more than one region in regions_df
+  # this may make sense if one region is a promoter for two genes (regions in regions_df)
+  # in this case the annotated peaks_df will contain one more row
   if(unique_assignment){
     # find distance to middle of peak
     ps <- peaks_df[res$from, 'SUMMIT']
@@ -307,8 +311,15 @@ get_overlaps <- function(peaks_df, regions_df, genomic_feature, summit=TRUE,
   pd_nohits <- peaks_df[!rows_hit,]
   pd_nohits[, genomic_feature] <- rep(FALSE, nrow(pd_nohits))
   # get part of peaks_df for which hits were found
-  pd_hits <- peaks_df[res$from,]
+  pd_hits <- peaks_df[res$from,] # res$from could be replaced by rows_hit
   pd_hits[, genomic_feature] <- rep(TRUE, nrow(pd_hits))
+
+  if(add_target_index){
+    print("Adding row index of target...")
+    # add row index of regions_df that was connected to peak in peaks_df
+    pd_hits[, "hit_row_idx"] <- res$to
+    pd_nohits[, "hit_row_idx"] <- -1
+  }
   
   # if feature is promoter, add the genes that regions are promoter for
   if(genomic_feature %in% c("promoter_1kb", "promoter_2kb", "promoter_3kb")){
